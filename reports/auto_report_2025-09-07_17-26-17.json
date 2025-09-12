@@ -1,0 +1,48 @@
+{
+    "news": [
+        {
+            "headline": "Steroids for the Short-Term Treatment of Ulcerative Colitis - Healthline",
+            "source": "Healthline",
+            "url": "https://www.healthline.com/health/ulcerative-colitis/steroids-for-ulcerative-colitis",
+            "published_at": "2022-04-19T14:56:35Z"
+        },
+        {
+            "headline": "Harmful habits that are damaging your liver - Hindustan Times",
+            "source": "Hindustan Times",
+            "url": "https://www.hindustantimes.com/photos/lifestyle/harmful-habits-that-are-damaging-your-liver-101650380169292.html",
+            "published_at": "2022-04-19T15:03:55Z"
+        },
+        {
+            "headline": "Trajectories of depressive symptoms in older adults and associated health outcomes - Nature.com",
+            "source": "Nature.com",
+            "url": "https://www.nature.com/articles/s43587-022-00203-1",
+            "published_at": "2022-04-19T15:07:57Z"
+        },
+        {
+            "headline": "Chronic Ankylosing Spondylitis Pain and Mental Health - Healthline",
+            "source": "Healthline",
+            "url": "https://www.healthline.com/health/ankylosing-spondylitis/chronic-pain-mental-effects",
+            "published_at": "2022-04-19T15:13:05Z"
+        },
+        {
+            "headline": "New Device Uses Cerenkov Light To Illuminate Cancer - IFLScience",
+            "source": "IFLScience",
+            "url": "https://www.iflscience.com/health-and-medicine/new-device-uses-cerenkov-light-to-illuminate-cancer/",
+            "published_at": "2022-04-19T16:29:00Z"
+        }
+    ],
+    "weather": {
+        "city": "Hyderabad",
+        "temperature": 28.3,
+        "humidity": null,
+        "timestamp": "2025-09-07T11:45"
+    },
+    "currency": [
+        {
+            "base": "USD",
+            "target": null,
+            "rate": 26.714,
+            "timestamp": "2025-09-07 17:26:17"
+        }
+    ]
+}
