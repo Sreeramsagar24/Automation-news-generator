@@ -23,12 +23,12 @@ def fetch_and_report():
     report_file = generate_report()
     send_email(report_file)
     print(f" Report generated and sent: {report_file}")
-
+    
 
 def clean_reports():
     reports_dir = "/home/ubuntu/AUTOMATION_PROJECT/reports"
     if not os.path.exists(reports_dir):
-        print("Reports directory does not exist.")
+        print("Error: Reports directory does not exist.")
         return
 
     cutoff_time = datetime.now() - timedelta(days=30)
