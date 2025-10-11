@@ -7,7 +7,7 @@ weather, and currency information by fetching data from the database.
 import json
 import os
 from datetime import datetime
-from AUTOMATION_PROJECT.lib.sql import get_connection
+from .sql import get_connection
 
 def generate_report():
     """

@@ -6,16 +6,22 @@ and currency data fetched from APIs.
 """
 from datetime import datetime
 import json
+import os
 import mysql.connector
-from AUTOMATION_PROJECT.lib.rest import fetch_news, fetch_weather, fetch_currency
+from .rest import fetch_news, fetch_weather, fetch_currency
+
+
 def open_json():
     """
     Opens and loads the JSON configuration file
-    :return:Configuration details from config.json
+    :return: Configuration details from config.json
     """
-    with open('C:\\Users\\SRIRAM\\PycharmProjects\\pythondeveloper\\'
-              'AUTOMATION_PROJECT\\config\\config.json', 'r',encoding="utf-8") as f:
-        data=json.load(f)
+    # Get base directory of project
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    config_path = os.path.join(base_dir, 'config', 'config.json')
+
+    with open(config_path, 'r', encoding="utf-8") as f:
+        data = json.load(f)
     return data
 def get_connection():
     """
