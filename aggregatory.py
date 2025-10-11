@@ -1,5 +1,10 @@
+# aggregatory.py
+"""
+aggregatory.py
+Fetches data from APIs, inserts into DB, generates JSON reports, sends emails,
+and cleans old reports
+"""
 import os
-import time
 from datetime import datetime, timedelta
 from lib.sql import create_tables, insert_news, insert_weather, insert_currency
 from lib.rest import fetch_news, fetch_weather, fetch_currency
@@ -8,6 +13,9 @@ from lib.emailer import send_email
 
 
 def fetch_and_report():
+    """
+    Fetch data, insert into DB, generate JSON report, and send email
+    """
     print("[INFO] Fetching data and generating report...")
     create_tables()
     news_data = fetch_news()
@@ -26,6 +34,9 @@ def fetch_and_report():
 
 
 def clean_reports():
+    """
+    Delete reports older than REPORT_CLEANUP_DAYS
+    """
     reports_dir = "/home/ubuntu/AUTOMATION_PROJECT/reports"
     if not os.path.exists(reports_dir):
         print("Reports directory does not exist.")

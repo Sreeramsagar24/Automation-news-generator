@@ -1,15 +1,23 @@
 # ssh.py
-import paramiko
-import os
-from datetime import datetime
+"""
+Module to create SSH connections using Paramiko
+"""
 import json
-import requests
+import paramiko
+from paramiko.ssh_exception import SSHException
 
 def open_json():
-    with open('C:\\Users\\SRIRAM\\PycharmProjects\\pythondeveloper\\AUTOMATION_PROJECT\\config\\config.json','r') as f:
+    """
+    :return: it opens the json file
+    """
+    with open('C:\\Users\\SRIRAM\\PycharmProjects\\pythondeveloper\\'
+              'AUTOMATION_PROJECT\\config\\config.json','r',encoding="utf-8") as f:
         return json.load(f)
 
 def ssh_connection():
+    """
+    it makes the ssh connection
+    """
     details=open_json()
     ssh_cfg =details["ssh"]
     try:
@@ -24,11 +32,7 @@ def ssh_connection():
         print("SSH connection established successfully ")
         return ssh
 
-    except Exception as e:
+    except SSHException as e:
         print(f" Failed to connect: {e}")
-
+        return None
 ssh_connection()
-
-
-
-

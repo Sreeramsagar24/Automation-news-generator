@@ -1,15 +1,37 @@
 # lib/rest.py
+
+"""
+rest.py
+This module contains functions to fetch news, weather, and currency data
+from APIs and load project configuration from JSON.
+"""
+
 import json
+import os
 import requests
 
-config_path = "/home/ubuntu/AUTOMATION_PROJECT/config/config.json"
+# Determine config path relative to this file
+CONFIG_PATH = os.path.join(os.path.dirname(__file__), "..", "config", "config.json")
+CONFIG_PATH = os.path.abspath(CONFIG_PATH)
+
 def open_json():
-    with open(config_path, 'r') as f:
+    """
+    Opens and loads the JSON configuration file.
+    Returns:
+         Configuration details from config.json
+    """
+    with open(CONFIG_PATH, "r", encoding="utf-8") as f:
         return json.load(f)
 
+
 def fetch_news():
+    """
+    Fetches news articles from the API defined in config.json.
+    Returns:
+         List of news articles
+    """
     details = open_json()
-    res = requests.get(details["news_api_url"])
+    res = requests.get(details["news_api_url"],timeout=10)
     data = res.json()
     articles = []
     for article in data.get("articles", []):
@@ -23,12 +45,22 @@ def fetch_news():
     return articles
 
 def get_location_from_ip():
-    res = requests.get("https://ipinfo.io")
+    """
+    Gets latitude and longitude of current IP using ipinfo.io API
+    Returns:
+        : latitude: float, longitude: float
+    """
+    res = requests.get("https://ipinfo.io",timeout=10)
     data = res.json()
     lat, lon = data["loc"].split(",")
     return float(lat), float(lon)
 
 def fetch_weather():
+    """
+    Fetches current weather from the API defined in config.json.
+    Returns:
+        : Current weather details
+    """
     details = open_json()
     latitude, longitude = get_location_from_ip()
     params = {
@@ -36,7 +68,7 @@ def fetch_weather():
         "longitude": longitude,
         "current_weather": True
     }
-    res = requests.get(details["weather_api_url"], params=params)
+    res = requests.get(details["weather_api_url"], params=params,timeout=10)
     data = res.json()
     current = data.get("current_weather", {})
     weather = []
@@ -48,8 +80,13 @@ def fetch_weather():
     return weather
 
 def fetch_currency():
+    """
+    Fetches currency exchange rates from the API defined in config.json.
+    Returns:
+         List of currency rates
+    """
     details = open_json()
-    res = requests.get(details["currency_api_url"])
+    res = requests.get(details["currency_api_url"],timeout=10)
     data = res.json()
     currency = []
     for target, rate in data.get("rates", {}).items():

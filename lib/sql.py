@@ -1,15 +1,30 @@
-# sql.py
-import mysql.connector
+# sql.
+"""
+sql.py
+This module contains functions to create MySQL tables and insert news, weather,
+and currency data fetched from APIs.
+"""
 from datetime import datetime
 import json
-from .rest import fetch_news, fetch_weather, fetch_currency
+import mysql.connector
+from AUTOMATION_PROJECT.lib.rest import fetch_news, fetch_weather, fetch_currency
 def open_json():
-    with open('C:\\Users\\SRIRAM\\PycharmProjects\\pythondeveloper\\AUTOMATION_PROJECT\\config\\config.json', 'r') as f:
+    """
+    Opens and loads the JSON configuration file
+    :return:Configuration details from config.json
+    """
+    with open('C:\\Users\\SRIRAM\\PycharmProjects\\pythondeveloper\\'
+              'AUTOMATION_PROJECT\\config\\config.json', 'r',encoding="utf-8") as f:
         data=json.load(f)
     return data
 def get_connection():
+    """
+    Creates a MySQL connection using config details
+    :return:mysql.connector.connection.MySQLConnection: Database connection object
+    """
     details = open_json()
     mysql_cfg = details["mysql"]
+    print("[DEBUG] Connecting to MySQL with:", mysql_cfg)
     return mysql.connector.connect(
         host=mysql_cfg["host"],
         user=mysql_cfg["user"],
@@ -20,6 +35,9 @@ def get_connection():
     )
 
 def create_tables():
+    """
+    Creates tables for news, weather, and currency if they do not exist
+    """
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("""
@@ -40,9 +58,13 @@ def create_tables():
     cur.close()
     conn.close()
 def insert_news(articles):
+    """
+    :param articles: Inserts news articles into the news table
+    """
     conn = get_connection()
     cur = conn.cursor()
-    query = """insert into news (headline, source, url, published_at, fetched_at) values (%s, %s, %s, %s, %s)"""
+    query = """insert into news (headline, source, url, published_at, fetched_at)
+                values (%s, %s, %s, %s, %s)"""
     for a in articles:
         cur.execute(query, (
             a.get("title"),
@@ -54,21 +76,27 @@ def insert_news(articles):
     cur.close()
     conn.close()
 def insert_weather(w):
+    """
+    :param w: Inserts weather data into the weather table
+    """
     conn = get_connection()
     cur = conn.cursor()
-    query = ("""
-        insert into weather (city, temperature, humidity, timestamp) values (%s, %s, %s, %s)""")
-    for w in w:
+    query = """
+        insert into weather (city, temperature, humidity, timestamp) values (%s, %s, %s, %s)"""
+    for i in w:
         cur.execute(query, (
             "Hyderabad",
-            w.get("temperature"),
-            w.get("humidity"),
-            w.get("time")
+            i.get("temperature"),
+            i.get("humidity"),
+            i.get("time")
         ))
     cur.close()
     conn.close()
 
 def insert_currency(rates):
+    """
+    :param rates: Inserts currency rates into the currency table
+    """
     conn = get_connection()
     cur = conn.cursor()
     query = """
@@ -85,12 +113,24 @@ def insert_currency(rates):
     cur.close()
     conn.close()
 
-articles=fetch_news()
-weather=fetch_weather()
-rates=fetch_currency()
-if __name__ == "__main__":
+
+
+def main():
+    """
+    :return:
+    """
     create_tables()
-    print("[INFO] Tables created successfully ")
-    insert_news(articles)
-    insert_weather(weather)
-    insert_currency(rates)
+    print("[INFO] Tables created successfully")
+
+    articles_data = fetch_news()
+    weather_data = fetch_weather()
+    rates_data = fetch_currency()
+
+    insert_news(articles_data)
+    insert_weather(weather_data)
+    insert_currency(rates_data)
+    print("[INFO] Data inserted successfully")
+
+
+if __name__ == "__main__":
+    main()

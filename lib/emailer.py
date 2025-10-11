@@ -1,17 +1,31 @@
-# lib/emailer.py
+ # lib/emailer.py
+"""
+emailer.py
+This module contains a function `send_email` that sends an email with a JSON report attached.
+"""
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 from email.mime.text import MIMEText
 import json
 from datetime import datetime
+from smtplib import SMTPException
+
 def send_email(report_file):
-    with open("C:\\Users\\SRIRAM\\PycharmProjects\\pythondeveloper\\AUTOMATION_PROJECT\\config\\config.json") as f:
+    """
+    Sends an email with the given report file attached.
+    Parameters:
+        report_file: The path to the report file to attach.
+    Returns:
+        None
+    """
+    with open("C:\\Users\\SRIRAM\\PycharmProjects\\pythondeveloper\\"
+              "AUTOMATION_PROJECT\\config\\config.json",encoding="utf-8") as f:
         cfg = json.load(f)
-    EMAIL_CFG = cfg["email"]
+    email_cfg = cfg["email"]
     msg = MIMEMultipart()
-    msg["From"] = EMAIL_CFG["sender_email"]
-    msg["To"] = ", ".join(EMAIL_CFG["recipients"])
+    msg["From"] = email_cfg["sender_email"]
+    msg["To"] = ", ".join(email_cfg["recipients"])
     msg["Subject"] = f"Automated Report - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
 
     msg.attach(MIMEText("Please find the attached JSON report.", "plain"))
@@ -22,11 +36,11 @@ def send_email(report_file):
     msg.attach(attachment)
 
     try:
-        server = smtplib.SMTP(EMAIL_CFG["smtp_server"], EMAIL_CFG["smtp_port"])
+        server = smtplib.SMTP(email_cfg["smtp_server"], email_cfg["smtp_port"])
         server.starttls()
-        server.login(EMAIL_CFG["sender_email"], EMAIL_CFG["password"])
-        server.sendmail(EMAIL_CFG["sender_email"], EMAIL_CFG["recipients"], msg.as_string())
+        server.login(email_cfg["sender_email"], email_cfg["password"])
+        server.sendmail(email_cfg["sender_email"], email_cfg["recipients"], msg.as_string())
         server.quit()
-        print(f" Email sent successfully to {EMAIL_CFG['recipients']}")
-    except Exception as e:
+        print(f" Email sent successfully to {email_cfg['recipients']}")
+    except SMTPException as e:
         print(f" Failed to send email: {e}")

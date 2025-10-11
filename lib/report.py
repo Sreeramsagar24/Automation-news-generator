@@ -1,16 +1,28 @@
+# lib/report.py
+"""
+report.py
+This module generates an automated JSON report containing latest news,
+weather, and currency information by fetching data from the database.
+"""
 import json
 import os
 from datetime import datetime
-from .sql import get_connection
+from AUTOMATION_PROJECT.lib.sql import get_connection
 
 def generate_report():
+    """
+    Fetches the latest news,weather and currency data from the datbase
+    and generates the json file
+    :return:The path to the generated JSON report file
+    """
     conn=get_connection()
     cur=conn.cursor(dictionary=True)
     report={"news":[],"weather":[],"currency":[]}
     cur.execute("SELECT headline, source, url, published_at from news ORDER BY id DESC LIMIT 5")
     report["news"] = cur.fetchall()
 
-    cur.execute("SELECT city, temperature, humidity, timestamp from weather ORDER BY id DESC LIMIT 1")
+    cur.execute("SELECT city, temperature, humidity, "
+                "timestamp from weather ORDER BY id DESC LIMIT 1")
     weather = cur.fetchone()
     if weather:
         report["weather"]=weather
@@ -34,4 +46,3 @@ def generate_report():
 
 if __name__ == "__main__":
     generate_report()
-
