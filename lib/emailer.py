@@ -1,57 +1,73 @@
-# lib/emailer.py
 """
 emailer.py
-This module contains a function `send_email` that sends an email with a JSON report attached.
+-----------
+This module contains a function `send_email` that sends an email
+with a JSON report attached using the centralized SMTP connection.
+
+Uses get_smtp_connection() from connections.py
+Loads email config dynamically from utils.py
+Sends JSON report as attachment
+Has consistent error handling and logs
 """
-import smtplib
+
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 from email.mime.text import MIMEText
-import json
 import os
 from datetime import datetime
 from smtplib import SMTPException
+from .utils import open_json
+from .connections import get_smtp_connection
 
 
-def open_json():
+def send_email(report_file: str):
     """
-    Opens the config.json from the config folder relative to the project root.
-    """
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    config_path = os.path.join(base_dir, 'config', 'config.json')
-    with open(config_path, 'r', encoding='utf-8') as f:
-        return json.load(f)
+    Send an email with the given JSON report attached.
+    Args:
+        report_file (str): Full path of the report JSON file.
 
-
-def send_email(report_file):
-    """
-    Sends an email with the given report file attached.
-    Parameters:
-        report_file: The path to the report file to attach.
     Returns:
-        None
+        bool: True if email sent successfully, False otherwise.
     """
-    cfg = open_json()  # <-- use open_json() instead of hardcoded path
-    email_cfg = cfg["email"]
-
-    msg = MIMEMultipart()
-    msg["From"] = email_cfg["sender_email"]
-    msg["To"] = ", ".join(email_cfg["recipients"])
-    msg["Subject"] = f"Automated Report - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
-
-    msg.attach(MIMEText("Please find the attached JSON report.", "plain"))
-
-    with open(report_file, "rb") as f:
-        attachment = MIMEApplication(f.read(), Name=os.path.basename(report_file))
-    attachment['Content-Disposition'] = f'attachment; filename="{os.path.basename(report_file)}"'
-    msg.attach(attachment)
-
     try:
-        server = smtplib.SMTP(email_cfg["smtp_server"], email_cfg["smtp_port"])
-        server.starttls()
-        server.login(email_cfg["sender_email"], email_cfg["password"])
-        server.sendmail(email_cfg["sender_email"], email_cfg["recipients"], msg.as_string())
-        server.quit()
-        print(f" Email sent successfully to {email_cfg['recipients']}")
-    except SMTPException as e:
-        print(f" Failed to send email: {e}")
+
+        email_cfg = open_json("email")
+        if not email_cfg:
+            raise KeyError("[ERROR] 'email' section missing in config file.")
+
+        sender = email_cfg["sender_email"]
+        recipients = email_cfg["recipients"]
+        subject = f"Automated Report - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+        body_text = "Hello,\n\nPlease find the attached automated JSON report.\n\nRegards,\nAutomation System"
+
+
+        msg = MIMEMultipart()
+        msg["From"] = sender
+        msg["To"] = ", ".join(recipients)
+        msg["Subject"] = subject
+        msg.attach(MIMEText(body_text, "plain"))
+
+
+        if not os.path.exists(report_file):
+            raise FileNotFoundError(f"[ERROR] Report file not found: {report_file}")
+
+        with open(report_file, "rb") as f:
+            attachment = MIMEApplication(f.read(), Name=os.path.basename(report_file))
+        attachment["Content-Disposition"] = f'attachment; filename="{os.path.basename(report_file)}"'
+        msg.attach(attachment)
+
+        smtp = get_smtp_connection()
+        if smtp is None:
+            raise ConnectionError("[ERROR] SMTP connection not established.")
+
+        smtp.sendmail(sender, recipients, msg.as_string())
+        print(f"[INFO] Email sent successfully to {recipients}")
+        return True
+
+    except (SMTPException, ConnectionError, FileNotFoundError, KeyError) as e:
+        print(f"[ERROR] Failed to send email: {e}")
+        return False
+
+    except Exception as e:
+        print(f"[ERROR] Unexpected error in send_email(): {e}")
+        return False

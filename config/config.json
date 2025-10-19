@@ -1,25 +1,26 @@
 {
-  "news_api_url": "https://saurav.tech/NewsAPI/top-headlines/category/health/in.json",
-  "news_api_key": "4384ec5cf36b4c2ba584611848a1f2ba",
+  "api": {
+    "news_api_url": "https://saurav.tech/NewsAPI/top-headlines/category/health/in.json",
+    "news_api_key": "4384ec5cf36b4c2ba584611848a1f2ba",
+    "weather_api_url": "https://api.open-meteo.com/v1/forecast",
+    "currency_api_url": "https://open.er-api.com/v6/latest/USD"
+  },
 
-  "weather_api_url": "https://api.open-meteo.com/v1/forecast",
+  "ssh": {
+    "host": "127.0.0.1",
+    "username": "ubuntu",
+    "port": 2222,
+    "password": "ubuntu",
+    "remote_dir": "/home/ubuntu/reports"
+  },
 
-  "currency_api_url": "https://open.er-api.com/v6/latest/USD",
-
- "ssh": {
-  "host": "127.0.0.1",
-  "username": "ubuntu",
-  "port": 2222,
-  "password": "ubuntu",
-  "remote_dir": "/home/ubuntu/reports"
-},
   "mysql": {
-  "host": "127.0.0.1",
-  "port": 3306,
-  "user": "sample",
-  "password": "sample",
-  "database": "aggregator"
-},
+    "host": "127.0.0.1",
+    "port": 3307,
+    "user": "sample",
+    "password": "sample",
+    "database": "aggregator"
+  },
 
   "email": {
     "smtp_server": "smtp.gmail.com",

@@ -1,142 +1,183 @@
-# sql.
 """
 sql.py
-This module contains functions to create MySQL tables and insert news, weather,
-and currency data fetched from APIs.
+Generic MySQL handler with automatic database + table precheck.
 """
+
+from mysql.connector import Error
 from datetime import datetime
-import json
-import os
-import mysql.connector
-from .rest import fetch_news, fetch_weather, fetch_currency
+from .connections import get_mysql_connection
+from .utils import open_json
 
 
-def open_json():
-    """
-    Opens and loads the JSON configuration file
-    :return: Configuration details from config.json
-    """
-    # Get base directory of project
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    config_path = os.path.join(base_dir, 'config', 'config.json')
+def precheck_database_and_tables(TABLES=None):
+    """Ensure the target database and required tables exist."""
+    try:
+        mysql_cfg = open_json("mysql")
+        db_name = mysql_cfg.get("database")
 
-    with open(config_path, 'r', encoding="utf-8") as f:
-        data = json.load(f)
-    return data
-def get_connection():
-    """
-    Creates a MySQL connection using config details
-    :return:mysql.connector.connection.MySQLConnection: Database connection object
-    """
-    details = open_json()
-    mysql_cfg = details["mysql"]
-    print("[DEBUG] Connecting to MySQL with:", mysql_cfg)
-    return mysql.connector.connect(
-        host=mysql_cfg["host"],
-        user=mysql_cfg["user"],
-        port=mysql_cfg["port"],
-        password=mysql_cfg["password"],
-        database=mysql_cfg["database"],
-        autocommit=True
-    )
+        if not db_name:
+            raise ValueError("[ERROR] Database name missing in config.json")
 
-def create_tables():
-    """
-    Creates tables for news, weather, and currency if they do not exist
-    """
-    conn = get_connection()
+        conn = get_mysql_connection(database=False)
+        cur = conn.cursor()
+
+        cur.execute(f"CREATE DATABASE IF NOT EXISTS `{db_name}`;")
+        print(f"[INFO] Database check complete or created: {db_name}")
+        cur.execute(f"USE `{db_name}`;")
+
+        # Default table schemas (if not passed)
+        if TABLES is None:
+            TABLES = {
+                "news": {
+                    "id": "INT AUTO_INCREMENT PRIMARY KEY",
+                    "headline": "VARCHAR(500)",
+                    "source": "VARCHAR(100)",
+                    "url": "VARCHAR(500)",
+                    "published_at": "VARCHAR(50)",
+                    "fetched_at": "VARCHAR(50)"
+                },
+                "weather": {
+                    "id": "INT AUTO_INCREMENT PRIMARY KEY",
+                    "city": "VARCHAR(100)",
+                    "temperature": "FLOAT",
+                    "humidity": "FLOAT",
+                    "timestamp": "VARCHAR(50)"
+                },
+                "currency": {
+                    "id": "INT AUTO_INCREMENT PRIMARY KEY",
+                    "base": "VARCHAR(10)",
+                    "target": "VARCHAR(10)",
+                    "rate": "FLOAT",
+                    "timestamp": "VARCHAR(50)"
+                }
+            }
+
+        # Create each table if missing
+        for table_name, columns in TABLES.items():
+            columns_sql = ", ".join([f"{col} {dtype}" for col, dtype in columns.items()])
+            cur.execute(f"CREATE TABLE IF NOT EXISTS `{table_name}` ({columns_sql});")
+            print(f"[INFO] Table '{table_name}' ready.")
+
+        conn.commit()
+        cur.close()
+        conn.close()
+        print("[INFO] Database and all required tables are ready.\n")
+
+    except Exception as e:
+        print(f"[ERROR] Database precheck failed: {e}")
+
+
+def insert_one(table: str, record: dict):
+    """Insert a single record into the specified table."""
+    if not record:
+        print("Skipping empty record.")
+        return
+
+    conn = get_mysql_connection(database=True)
+    if conn is None:
+        print("[ERROR] MySQL connection failed. Skipping insert.")
+        return
+
     cur = conn.cursor()
-    cur.execute("""
-        create table if not exists news (id int auto_increment primary key,headline varchar(500),
-        source varchar(100),url varchar(500),published_at varchar(50),fetched_at varchar(50)
-        )
-    """)
-    cur.execute("""
-        create table if not exists weather (
-            id int auto_increment primary key,
-            city varchar(100),
-            temperature float,
-            humidity float,
-            timestamp varchar(50))""")
-    cur.execute("""
-        create table if not exists currency (id int auto_increment primary key,base varchar(10),
-            target varchar(10),rate float,timestamp varchar(50))""")
-    cur.close()
-    conn.close()
-def insert_news(articles):
-    """
-    :param articles: Inserts news articles into the news table
-    """
-    conn = get_connection()
+    try:
+        cols = ", ".join(record.keys())
+        placeholders = ", ".join(["%s"] * len(record))
+        sql = f"INSERT INTO {table} ({cols}) VALUES ({placeholders})"
+        cur.execute(sql, tuple(record.values()))
+        conn.commit()
+        print(f"[INFO] 1.record inserted into '{table}'.")
+    except Error as e:
+        print(f"[ERROR] Insert failed: {e}")
+    finally:
+        cur.close()
+        conn.close()
+
+
+def insert_many(table: str, records: list[dict]):
+    """Insert multiple records (list of dicts) into a table."""
+    if not records:
+        print("[WARN] No records to insert.")
+        return
+
+    conn = get_mysql_connection(database=True)
+    if conn is None:
+        print("[ERROR] MySQL connection failed. Skipping bulk insert.")
+        return
+
     cur = conn.cursor()
-    query = """insert into news (headline, source, url, published_at, fetched_at)
-                values (%s, %s, %s, %s, %s)"""
-    for a in articles:
-        cur.execute(query, (
-            a.get("title"),
-            a.get("source"),
-            a.get("url"),
-            a.get("publishedAt"),
-            datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        ))
-    cur.close()
-    conn.close()
-def insert_weather(w):
-    """
-    :param w: Inserts weather data into the weather table
-    """
-    conn = get_connection()
-    cur = conn.cursor()
-    query = """
-        insert into weather (city, temperature, humidity, timestamp) values (%s, %s, %s, %s)"""
-    for i in w:
-        cur.execute(query, (
-            "Hyderabad",
-            i.get("temperature"),
-            i.get("humidity"),
-            i.get("time")
-        ))
-    cur.close()
-    conn.close()
-
-def insert_currency(rates):
-    """
-    :param rates: Inserts currency rates into the currency table
-    """
-    conn = get_connection()
-    cur = conn.cursor()
-    query = """
-        INSERT INTO currency (base, target, rate, timestamp)
-        VALUES (%s, %s, %s, %s)
-    """
-    for r in rates:
-        cur.execute(query, (
-            r.get("base"),
-            r.get("target"),
-            r.get("rate"),
-            datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        ))
-    cur.close()
-    conn.close()
+    try:
+        cols = ", ".join(records[0].keys())
+        placeholders = ", ".join(["%s"] * len(records[0]))
+        sql = f"INSERT INTO {table} ({cols}) VALUES ({placeholders})"
+        values = [tuple(r.values()) for r in records]
+        cur.executemany(sql, values)
+        conn.commit()
+        print(f"[INFO] {len(records)} records inserted into '{table}'.")
+    except Error as e:
+        print(f"[ERROR] Bulk insert failed: {e}")
+    finally:
+        cur.close()
+        conn.close()
 
 
+def fetch_all(table: str, columns: list[str] | None = None):
+    """Fetch all rows from a table as a list of dicts."""
+    conn = get_mysql_connection(database=True)
+    if conn is None:
+        print("[ERROR] MySQL connection failed. Cannot fetch data.")
+        return []
 
-def main():
-    """
-    :return:
-    """
-    create_tables()
-    print("[INFO] Tables created successfully")
-
-    articles_data = fetch_news()
-    weather_data = fetch_weather()
-    rates_data = fetch_currency()
-
-    insert_news(articles_data)
-    insert_weather(weather_data)
-    insert_currency(rates_data)
-    print("[INFO] Data inserted successfully")
+    cur = conn.cursor(dictionary=True)
+    try:
+        cols = ", ".join(columns) if columns else "*"
+        cur.execute(f"SELECT {cols} FROM {table}")
+        data = cur.fetchall()
+        print(f"[INFO] Fetched {len(data)} rows from '{table}'.")
+        return data
+    except Error as e:
+        print(f"[ERROR] Fetch failed: {e}")
+        return []
+    finally:
+        cur.close()
+        conn.close()
 
 
 if __name__ == "__main__":
-    main()
+    print("Running SQL module self-test...\n")
+
+    TABLES = {
+        "news": {
+            "id": "INT AUTO_INCREMENT PRIMARY KEY",
+            "headline": "VARCHAR(500)",
+            "source": "VARCHAR(100)",
+            "url": "VARCHAR(500)",
+            "published_at": "VARCHAR(50)",
+            "fetched_at": "VARCHAR(50)"
+        },
+        "weather": {
+            "id": "INT AUTO_INCREMENT PRIMARY KEY",
+            "city": "VARCHAR(100)",
+            "temperature": "FLOAT",
+            "humidity": "FLOAT",
+            "timestamp": "VARCHAR(50)"
+        },
+        "currency": {
+            "id": "INT AUTO_INCREMENT PRIMARY KEY",
+            "base": "VARCHAR(10)",
+            "target": "VARCHAR(10)",
+            "rate": "FLOAT",
+            "timestamp": "VARCHAR(50)"
+        }
+    }
+
+    precheck_database_and_tables(TABLES)
+
+    insert_one("news", {
+        "headline": "Teacher-approved structured schema test",
+        "source": "System",
+        "url": "https://example.com",
+        "published_at": datetime.now().strftime("%Y-%m-%d"),
+        "fetched_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    })
+
+    print(fetch_all("news"))

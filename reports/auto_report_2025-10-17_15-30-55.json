@@ -1,0 +1,48 @@
+{
+    "news": [
+        {
+            "headline": "Long Covid More Severe In Women Than Men, Suggests Study - Mint",
+            "source": "Livemint",
+            "url": "https://www.livemint.com/news/india/long-covid-more-severe-in-women-than-men-suggests-study-11650538683775.html",
+            "published_at": "2022-04-21T11:37:19Z"
+        },
+        {
+            "headline": "Air pollution increases risk of getting COVID-19 in young adults - The European Scientist",
+            "source": "The European Scientist",
+            "url": "https://www.europeanscientist.com/en/environment/air-pollution-increases-risk-of-getting-covid-19-in-young-adults/",
+            "published_at": "2022-04-21T11:22:43Z"
+        },
+        {
+            "headline": "Why We Can't 'Boost' Our Way Out of the COVID-19 Pandemic in the Long Term \u2013 The Wire Science - The Wire Science",
+            "source": "Thewire.in",
+            "url": "https://science.thewire.in/health/we-cannot-boost-our-way-out-of-covid-19-pandemic-in-long-term/",
+            "published_at": "2022-04-21T11:20:35Z"
+        },
+        {
+            "headline": "Let's manage pain, learn about 'Pain Medicine' - LIFESTYLE - GENERAL - Kerala Kaumudi ",
+            "source": "Keralakaumudi.com",
+            "url": "https://keralakaumudi.com/en/news/news.php?id=797844&u",
+            "published_at": "2022-04-21T11:14:14Z"
+        },
+        {
+            "headline": "We've long been told salt is bad for you. Is it really? - USA TODAY",
+            "source": "USA Today",
+            "url": "https://www.usatoday.com/story/life/health-wellness/2022/04/21/salt-sodium-how-much-too-much-your-food/7383952001/",
+            "published_at": "2022-04-21T11:01:15Z"
+        }
+    ],
+    "weather": {
+        "city": "Auto-Detected",
+        "temperature": 30.0,
+        "humidity": null,
+        "timestamp": "2025-10-17T10:00"
+    },
+    "currency": [
+        {
+            "base": "USD",
+            "target": "ZWL",
+            "rate": 26.6235,
+            "timestamp": "2025-10-17 15:30:55"
+        }
+    ]
+}

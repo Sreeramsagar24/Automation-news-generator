@@ -6,43 +6,41 @@ This module contains functions to fetch news, weather, and currency data
 from APIs and load project configuration from JSON.
 """
 
-import json
-import os
 import requests
+from .utils import open_json
 
-# Determine config path relative to this file
-CONFIG_PATH = os.path.join(os.path.dirname(__file__), "..", "config", "config.json")
-CONFIG_PATH = os.path.abspath(CONFIG_PATH)
-
-def open_json():
-    """
-    Opens and loads the JSON configuration file.
-    Returns:
-         Configuration details from config.json
-    """
-    with open(CONFIG_PATH, "r", encoding="utf-8") as f:
-        return json.load(f)
-
+config = open_json(None)
 
 def fetch_news():
     """
-    Fetches news articles from the API defined in config.json.
-    Returns:
-         List of news articles
+    Fetch news articles from the API defined in config.json.
+    Returns a list of dicts with keys: source, title, url, publishedAt, content.
     """
-    details = open_json()
-    res = requests.get(details["news_api_url"],timeout=10)
-    data = res.json()
-    articles = []
-    for article in data.get("articles", []):
-        articles.append({
-            "source": article.get("source", {}).get("name"),
-            "title": article.get("title"),
-            "url": article.get("url"),
-            "publishedAt": article.get("publishedAt"),
-            "content": article.get("content")
-        })
-    return articles
+    try:
+        api_url = config.get("news_api_url")
+        if not api_url:
+            raise KeyError("[ERROR] 'news_api_url' missing in config file.")
+
+        res = requests.get(api_url, timeout=10)
+        res.raise_for_status()
+        data = res.json()
+
+        articles = []
+        for article in data.get("articles", []):
+            articles.append({
+                "source": article.get("source", {}).get("name"),
+                "title": article.get("title"),
+                "url": article.get("url"),
+                "publishedAt": article.get("publishedAt"),
+                "content": article.get("content")
+            })
+
+        print(f"[INFO] Fetched {len(articles)} news articles.")
+        return articles
+
+    except Exception as e:
+        print(f"[ERROR] fetch_news() failed: {e}")
+        return []
 
 def get_location_from_ip():
     """
@@ -61,38 +59,66 @@ def fetch_weather():
     Returns:
         : Current weather details
     """
-    details = open_json()
-    latitude, longitude = get_location_from_ip()
-    params = {
-        "latitude": latitude,
-        "longitude": longitude,
-        "current_weather": True
-    }
-    res = requests.get(details["weather_api_url"], params=params,timeout=10)
-    data = res.json()
-    current = data.get("current_weather", {})
-    weather = []
-    weather.append({
-        "time": current.get("time"),
-        "temperature": current.get("temperature"),
-        "humidity": current.get("humidity")
-    })
-    return weather
+    try:
+        details = open_json()
+        latitude, longitude = get_location_from_ip()
+        params = {
+            "latitude": latitude,
+            "longitude": longitude,
+            "current_weather": True
+        }
+        res = requests.get(details["weather_api_url"], params=params,timeout=10)
+        data = res.json()
+        current = data.get("current_weather", {})
+        weather = []
+        weather.append({
+            "time": current.get("time"),
+            "temperature": current.get("temperature"),
+            "humidity": current.get("humidity")
+        })
+        return weather
+    except Exception as e:
+        print(f"fetch_weather failed {e}")
+        return []
+
+def get_location_from_ip():
+    """Get latitude & longitude of current system using ipinfo.io."""
+    try:
+        res = requests.get("https://ipinfo.io", timeout=10)
+        data = res.json()
+        lat, lon = data.get("loc", "0,0").split(",")
+        return float(lat), float(lon)
+    except Exception as e:
+        print(f"[ERROR] get_location_from_ip() failed: {e}")
+        return 0.0, 0.0
+
 
 def fetch_currency():
     """
-    Fetches currency exchange rates from the API defined in config.json.
-    Returns:
-         List of currency rates
+    Fetch currency exchange rates from API.
+    Returns list of dicts with base, target, and rate.
     """
-    details = open_json()
-    res = requests.get(details["currency_api_url"],timeout=10)
-    data = res.json()
-    currency = []
-    for target, rate in data.get("rates", {}).items():
-        currency.append({
-            "base": data.get("base_code"),
+    try:
+        api_url = config.get("currency_api_url")
+        if not api_url:
+            raise KeyError("[ERROR] 'currency_api_url' missing in config file.")
+
+        res = requests.get(api_url, timeout=10)
+        res.raise_for_status()
+        data = res.json()
+
+        base = data.get("base_code")
+        rates = data.get("rates", {})
+
+        currency_list = [{
+            "base": base,
             "target": target,
             "rate": rate
-        })
-    return currency
+        } for target, rate in rates.items()]
+
+        print(f"[INFO]  Fetched {len(currency_list)} currency rates.")
+        return currency_list
+
+    except Exception as e:
+        print(f"[ERROR] fetch_currency() failed: {e}")
+        return []
